@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { getPlacements } from "@/actions/placement";
 import Link from "next/link";
+import { ModeToggle } from "@/components/mode-toggle";
 
 type Record = {
     id: string;
@@ -68,6 +69,9 @@ export default function Home() {
 
     return (
         <div className="container mx-auto p-6 space-y-8">
+            <div className="flex float-end">
+                <ModeToggle />
+            </div>
             <div className="text-center space-y-2">
                 <h1 className="text-3xl font-bold text-primary">
                     USAR GGSIPU Placement Records
