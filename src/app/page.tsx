@@ -13,6 +13,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { getPlacements } from "@/actions/placement";
+import Link from "next/link";
 
 type Record = {
     id: string;
@@ -176,6 +177,15 @@ export default function Home() {
                         ))}
                     </TableBody>
                 </Table>
+            </div>
+            <div className="flex justify-center italic">
+                by
+                <Link
+                    href="https://ayuugoyal.vercel.app/"
+                    className="text-blue-800"
+                >
+                    @ayuugoyal
+                </Link>
             </div>
         </div>
     );
