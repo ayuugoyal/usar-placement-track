@@ -182,6 +182,10 @@ export default function Home() {
                     </TableBody>
                 </Table>
             </div>
+            <div>
+                Total placed students:{" "}
+                {records.reduce((acc, record) => acc + record.student_count, 0)}
+            </div>
             <div className="flex justify-center italic">
                 by
                 <Link
