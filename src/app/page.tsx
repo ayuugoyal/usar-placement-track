@@ -1,101 +1,182 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { getPlacements } from "@/actions/placement";
+
+type Record = {
+    id: string;
+    company_name: string;
+    package: number;
+    student_count: number;
+    created_at: string;
+};
+
+type SortField = "company_name" | "package" | "student_count" | "created_at";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [records, setRecords] = useState<Record[]>([]);
+    const [sortField, setSortField] = useState<SortField>("created_at");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+    const [searchTerm, setSearchTerm] = useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    useEffect(() => {
+        const fetchRecords = async () => {
+            const response = await getPlacements();
+            const formattedResponse = response.map((record) => ({
+                ...record,
+                package: Number(record.package),
+                student_count: Number(record.student_count),
+                created_at: new Date(record.created_at).toISOString(),
+            }));
+            setRecords(formattedResponse);
+        };
+        fetchRecords();
+    }, []);
+
+    const handleSort = (field: SortField) => {
+        if (field === sortField) {
+            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+        } else {
+            setSortField(field);
+            setSortDirection("asc");
+        }
+
+        const sortedRecords = [...records].sort((a, b) => {
+            if (a[field] < b[field]) return sortDirection === "asc" ? -1 : 1;
+            if (a[field] > b[field]) return sortDirection === "asc" ? 1 : -1;
+            return 0;
+        });
+
+        setRecords(sortedRecords);
+    };
+
+    const filteredRecords = records.filter((record) =>
+        record.company_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="container mx-auto p-6 space-y-8">
+            <div className="text-center space-y-2">
+                <h1 className="text-3xl font-bold text-primary">
+                    USAR GGSIPU Placement Records
+                </h1>
+                <p className="text-muted-foreground">
+                    Explore and sort placement data
+                </p>
+            </div>
+
+            <div className="flex justify-between items-center flex-col sm:flex-row gap-3">
+                <div className="relative w-64">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search company..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                    Showing {filteredRecords.length} of {records.length} records
+                </p>
+            </div>
+
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[250px]">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => handleSort("company_name")}
+                                    className="font-bold"
+                                >
+                                    Company Name
+                                    {sortField === "company_name" &&
+                                        (sortDirection === "asc" ? (
+                                            <ChevronUp className="ml-2 h-4 w-4" />
+                                        ) : (
+                                            <ChevronDown className="ml-2 h-4 w-4" />
+                                        ))}
+                                </Button>
+                            </TableHead>
+                            <TableHead>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => handleSort("package")}
+                                    className="font-bold"
+                                >
+                                    Package (LPA)
+                                    {sortField === "package" &&
+                                        (sortDirection === "asc" ? (
+                                            <ChevronUp className="ml-2 h-4 w-4" />
+                                        ) : (
+                                            <ChevronDown className="ml-2 h-4 w-4" />
+                                        ))}
+                                </Button>
+                            </TableHead>
+                            <TableHead>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => handleSort("student_count")}
+                                    className="font-bold"
+                                >
+                                    Students Placed
+                                    {sortField === "student_count" &&
+                                        (sortDirection === "asc" ? (
+                                            <ChevronUp className="ml-2 h-4 w-4" />
+                                        ) : (
+                                            <ChevronDown className="ml-2 h-4 w-4" />
+                                        ))}
+                                </Button>
+                            </TableHead>
+                            <TableHead className="text-right">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => handleSort("created_at")}
+                                    className="font-bold"
+                                >
+                                    Date
+                                    {sortField === "created_at" &&
+                                        (sortDirection === "asc" ? (
+                                            <ChevronUp className="ml-2 h-4 w-4" />
+                                        ) : (
+                                            <ChevronDown className="ml-2 h-4 w-4" />
+                                        ))}
+                                </Button>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredRecords.map((record) => (
+                            <TableRow key={record.id}>
+                                <TableCell className="font-medium">
+                                    {record.company_name}
+                                </TableCell>
+                                <TableCell>
+                                    {record.package.toFixed(2)}
+                                </TableCell>
+                                <TableCell>{record.student_count}</TableCell>
+                                <TableCell className="text-right">
+                                    {new Date(
+                                        record.created_at
+                                    ).toLocaleDateString()}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }
